@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #87CEEB;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #speed-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #altitude-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            color: white;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        #aircraft-selection {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            pointer-events: auto;
+            display: none;
+        }
+        
+        .aircraft-option {
+            display: block;
+            margin: 10px;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .aircraft-option:hover {
+            background: #555;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="loading">Loading Flight Simulator...</div>
+        
+        <div id="ui-overlay">
+            <div id="crosshair"></div>
+            
+            <div id="hud">
+                <div id="mode">Mode: Walking</div>
+                <div id="position">Position: (0, 0, 0)</div>
+            </div>
+            
+            <div id="speed-indicator">Speed: 0 kt</div>
+            <div id="altitude-indicator">Altitude: 0 ft</div>
+            
+            <div id="instructions">
+                <div>WASD: Move | Mouse: Look | E: Interact with Aircraft | ESC: Exit Aircraft</div>
+                <div>Flight: Arrow Keys or WASD: Control | Space: Throttle Up | Shift: Throttle Down</div>
+            </div>
+            
+            <div id="aircraft-selection">
+                <h3>Select Aircraft</h3>
+                <button class="aircraft-option" data-aircraft="fighter">F-16 Fighter Jet</button>
+                <button class="aircraft-option" data-aircraft="cargo">C-130 Cargo Plane</button>
+                <button class="aircraft-option" data-aircraft="helicopter">UH-60 Helicopter</button>
+                <button class="aircraft-option" onclick="closeAircraftSelection()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/controls.js"></script>
+    <script src="js/aircraft.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
