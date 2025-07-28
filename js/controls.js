@@ -3,7 +3,7 @@ class Controls {
         this.keys = {};
         this.mouse = { x: 0, y: 0, deltaX: 0, deltaY: 0 };
         this.isPointerLocked = false;
-        this.sensitivity = 0.002;
+        this.sensitivity = 0.001;  // Reduced mouse sensitivity
         
         this.setupEventListeners();
     }
@@ -67,8 +67,8 @@ class Controls {
     getWalkingInput() {
         const input = { x: 0, z: 0 };
         
-        if (this.isKeyPressed('KeyW')) input.z -= 1;
-        if (this.isKeyPressed('KeyS')) input.z += 1;
+        if (this.isKeyPressed('KeyW')) input.z += 1;  // Fixed: W moves forward (positive Z)
+        if (this.isKeyPressed('KeyS')) input.z -= 1;  // Fixed: S moves backward (negative Z)
         if (this.isKeyPressed('KeyA')) input.x -= 1;
         if (this.isKeyPressed('KeyD')) input.x += 1;
         

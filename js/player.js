@@ -17,7 +17,7 @@ class Player {
         this.gravity = -25;
         
         // Camera properties
-        this.mouseSensitivity = 0.002;
+        this.mouseSensitivity = 0.001;  // Reduced mouse sensitivity
         this.cameraOffset = new THREE.Vector3(0, 1.7, 0); // Eye height
         
         // Aircraft interaction
@@ -31,6 +31,8 @@ class Player {
     }
     
     update(deltaTime, controls, aircraft) {
+        this.aircraft = aircraft; // Store reference for UI updates
+        
         if (this.isFlying && this.currentAircraft) {
             this.updateFlightMode(deltaTime, controls);
         } else {
@@ -57,15 +59,15 @@ class Player {
         const speed = isRunning ? this.runSpeed : this.walkSpeed;
         
         // Calculate movement direction based on camera rotation
-        const forward = new THREE.Vector3(0, 0, -1);
+        const forward = new THREE.Vector3(0, 0, -1);  // Forward is negative Z in Three.js
         const right = new THREE.Vector3(1, 0, 0);
         
         forward.applyEuler(new THREE.Euler(0, this.rotation.y, 0));
         right.applyEuler(new THREE.Euler(0, this.rotation.y, 0));
         
-        // Apply input
+        // Apply input (note: walkInput.z is now correct with fixed controls)
         const movement = new THREE.Vector3();
-        movement.add(forward.clone().multiplyScalar(walkInput.z));
+        movement.add(forward.clone().multiplyScalar(-walkInput.z));  // Negate to match Three.js coordinate system
         movement.add(right.clone().multiplyScalar(walkInput.x));
         
         if (movement.length() > 0) {
@@ -112,10 +114,13 @@ class Player {
         const flightInput = controls.getFlightInput();
         const mouseDelta = controls.getMouseDelta();
         
-        // Mouse flight controls (more sensitive in flight)
+        // Mouse flight controls (reduced sensitivity)
         if (controls.isPointerLocked) {
-            this.currentAircraft.rotation.y -= mouseDelta.x * this.mouseSensitivity * 0.5;
-            this.currentAircraft.rotation.x -= mouseDelta.y * this.mouseSensitivity * 0.5;
+            this.currentAircraft.rotation.y -= mouseDelta.x * this.mouseSensitivity * 0.3;
+            this.currentAircraft.rotation.x -= mouseDelta.y * this.mouseSensitivity * 0.3;
+            
+            // Limit pitch angle for aircraft stability
+            this.currentAircraft.rotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, this.currentAircraft.rotation.x));
         }
         
         // Update aircraft
@@ -230,8 +235,16 @@ class Player {
     
     updateCameraPosition() {
         if (this.isFlying && this.currentAircraft) {
-            // Cockpit view
-            const cockpitOffset = new THREE.Vector3(0, 1, 2);
+            // Cockpit view with better positioning
+            let cockpitOffset;
+            if (this.currentAircraft.type === 'helicopter') {
+                cockpitOffset = new THREE.Vector3(-3, 2, 0);  // Helicopter cockpit
+            } else if (this.currentAircraft.type === 'cargo') {
+                cockpitOffset = new THREE.Vector3(-15, 4, 0); // Cargo plane cockpit
+            } else {
+                cockpitOffset = new THREE.Vector3(-8, 2, 0);  // Fighter cockpit
+            }
+            
             cockpitOffset.applyEuler(this.currentAircraft.rotation);
             this.camera.position.copy(this.currentAircraft.position).add(cockpitOffset);
             this.camera.rotation.copy(this.currentAircraft.rotation);
@@ -262,7 +275,26 @@ class Player {
             // Show nearby aircraft info
             if (this.nearbyAircraftCache && this.nearbyAircraftCache.length > 0) {
                 const nearest = this.nearbyAircraftCache[0];
-                modeElement.textContent += ` | Press E to enter ${nearest.type}`;
+                const distance = Math.round(nearest.getDistanceToPoint(this.position));
+                modeElement.textContent += ` | Press E to enter ${nearest.type.toUpperCase()} (${distance}m)`;
+                
+                // Highlight nearby aircraft
+                this.nearbyAircraftCache.forEach(aircraft => {
+                    aircraft.mesh.traverse((child) => {
+                        if (child.material) {
+                            child.material.emissive.setHex(0x002200);
+                        }
+                    });
+                });
+            } else {
+                // Remove highlighting from all aircraft
+                this.aircraft.forEach(aircraft => {
+                    aircraft.mesh.traverse((child) => {
+                        if (child.material) {
+                            child.material.emissive.setHex(0x000000);
+                        }
+                    });
+                });
             }
         }
         
