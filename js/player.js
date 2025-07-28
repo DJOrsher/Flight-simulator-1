@@ -289,7 +289,7 @@ class Player {
                 // Highlight nearby aircraft
                 this.nearbyAircraftCache.forEach(aircraft => {
                     aircraft.mesh.traverse((child) => {
-                        if (child.material) {
+                        if (child.material && child.material.emissive) {
                             child.material.emissive.setHex(0x002200);
                         }
                     });
@@ -298,7 +298,7 @@ class Player {
                 // Remove highlighting from all aircraft
                 this.aircraft.forEach(aircraft => {
                     aircraft.mesh.traverse((child) => {
-                        if (child.material) {
+                        if (child.material && child.material.emissive) {
                             child.material.emissive.setHex(0x000000);
                         }
                     });
