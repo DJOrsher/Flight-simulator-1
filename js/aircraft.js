@@ -79,11 +79,12 @@ class Aircraft {
         });
         
         if (this.type === 'helicopter') {
-            // Main fuselage - more rounded
-            const fuselageGeometry = new THREE.CapsuleGeometry(
+            // Main fuselage - more rounded using CylinderGeometry
+            const fuselageGeometry = new THREE.CylinderGeometry(
+                this.size.width * 0.15,
                 this.size.width * 0.15,
                 this.size.length * 0.7,
-                8, 16
+                16
             );
             const fuselage = new THREE.Mesh(fuselageGeometry, bodyMaterial);
             fuselage.rotation.z = Math.PI / 2;
