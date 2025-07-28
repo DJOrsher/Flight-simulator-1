@@ -130,8 +130,8 @@ class Player {
         this.position.copy(this.currentAircraft.position);
         this.rotation.copy(this.currentAircraft.rotation);
         
-        // Check for exit aircraft (E key)
-        if (controls.isInteractPressed()) {
+        // Check for exit aircraft (E key or Escape key)
+        if (controls.isInteractPressed() || controls.isExitPressed()) {
             this.exitAircraft();
         }
         
