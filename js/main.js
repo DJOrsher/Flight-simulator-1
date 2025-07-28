@@ -83,21 +83,31 @@ class FlightSimulator {
     createAircraft() {
         // Create different types of aircraft around the airbase
         const aircraftData = [
-            { type: 'fighter', position: new THREE.Vector3(-60, 2, -20) },
-            { type: 'fighter', position: new THREE.Vector3(-60, 2, 0) },
-            { type: 'cargo', position: new THREE.Vector3(-40, 2, -40) },
-            { type: 'cargo', position: new THREE.Vector3(-40, 2, 20) },
-            { type: 'helicopter', position: new THREE.Vector3(-20, 2, -60) },
-            { type: 'helicopter', position: new THREE.Vector3(-20, 2, 60) },
+            // Hangar area aircraft (more visible positions)
+            { type: 'fighter', position: new THREE.Vector3(-60, 5, -20) },
+            { type: 'fighter', position: new THREE.Vector3(-60, 5, 0) },
+            { type: 'cargo', position: new THREE.Vector3(-40, 8, -40) },
+            { type: 'cargo', position: new THREE.Vector3(-40, 8, 20) },
+            { type: 'helicopter', position: new THREE.Vector3(-20, 6, -60) },
+            { type: 'helicopter', position: new THREE.Vector3(-20, 6, 60) },
             
-            // Additional aircraft at different locations
-            { type: 'fighter', position: new THREE.Vector3(30, 2, -30) },
-            { type: 'cargo', position: new THREE.Vector3(50, 2, 40) },
-            { type: 'helicopter', position: new THREE.Vector3(20, 2, -50) },
+            // Runway and taxiway area
+            { type: 'fighter', position: new THREE.Vector3(30, 5, -30) },
+            { type: 'cargo', position: new THREE.Vector3(50, 8, 40) },
+            { type: 'helicopter', position: new THREE.Vector3(20, 6, -50) },
+            
+            // Additional aircraft for variety
+            { type: 'fighter', position: new THREE.Vector3(-80, 5, 20) },
+            { type: 'helicopter', position: new THREE.Vector3(70, 6, -20) },
         ];
         
         aircraftData.forEach(data => {
             const aircraft = new Aircraft(data.type, data.position);
+            
+            // Add random rotation for variety
+            aircraft.rotation.y = Math.random() * Math.PI * 2;
+            aircraft.mesh.rotation.y = aircraft.rotation.y;
+            
             this.aircraft.push(aircraft);
             this.scene.add(aircraft.mesh);
         });
