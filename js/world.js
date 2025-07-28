@@ -241,7 +241,11 @@ class World {
     createRunwayLights() {
         // Edge lights for main runway
         const lightGeometry = new THREE.BoxGeometry(0.5, 2, 0.5);
-        const lightMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const lightMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0xffff00,
+            emissive: 0xffff00,
+            emissiveIntensity: 0.3
+        });
         
         for (let i = -95; i <= 95; i += 10) {
             // Left side

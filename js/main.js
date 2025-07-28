@@ -156,7 +156,7 @@ class FlightSimulator {
         // Animate runway lights
         const time = performance.now() * 0.001;
         this.world.lights.forEach((light, index) => {
-            if (light.material) {
+            if (light.material && light.material.emissive) {
                 light.material.emissive.setHSL(0.15, 1, 0.5 + 0.5 * Math.sin(time * 2 + index * 0.1));
             }
         });
