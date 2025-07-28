@@ -67,8 +67,8 @@ class Controls {
     getWalkingInput() {
         const input = { x: 0, z: 0 };
         
-        if (this.isKeyPressed('KeyW')) input.z += 1;  // Fixed: W moves forward (positive Z)
-        if (this.isKeyPressed('KeyS')) input.z -= 1;  // Fixed: S moves backward (negative Z)
+        if (this.isKeyPressed('KeyW')) input.z -= 1;  // W moves forward (negative Z in Three.js)
+        if (this.isKeyPressed('KeyS')) input.z += 1;  // S moves backward (positive Z in Three.js)
         if (this.isKeyPressed('KeyA')) input.x -= 1;
         if (this.isKeyPressed('KeyD')) input.x += 1;
         
@@ -84,9 +84,9 @@ class Controls {
             throttle: 0
         };
         
-        // Pitch (elevator)
-        if (this.isKeyPressed('KeyW') || this.isKeyPressed('ArrowUp')) input.pitch = -1;
-        if (this.isKeyPressed('KeyS') || this.isKeyPressed('ArrowDown')) input.pitch = 1;
+        // Pitch (elevator) - W pulls stick back (nose up), S pushes stick forward (nose down)
+        if (this.isKeyPressed('KeyW') || this.isKeyPressed('ArrowUp')) input.pitch = 1;
+        if (this.isKeyPressed('KeyS') || this.isKeyPressed('ArrowDown')) input.pitch = -1;
         
         // Yaw (rudder)
         if (this.isKeyPressed('KeyA') || this.isKeyPressed('ArrowLeft')) input.yaw = -1;
@@ -94,7 +94,7 @@ class Controls {
         
         // Roll (ailerons)
         if (this.isKeyPressed('KeyQ')) input.roll = -1;
-        if (this.isKeyPressed('KeyE')) input.roll = 1;
+        if (this.isKeyPressed('KeyZ')) input.roll = 1;  // Changed from E to Z
         
         // Throttle
         if (this.isKeyPressed('Space')) input.throttle = 1;
@@ -105,9 +105,5 @@ class Controls {
     
     isInteractPressed() {
         return this.isKeyPressed('KeyE');
-    }
-    
-    isExitPressed() {
-        return this.isKeyPressed('Escape');
     }
 }

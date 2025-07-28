@@ -65,9 +65,9 @@ class Player {
         forward.applyEuler(new THREE.Euler(0, this.rotation.y, 0));
         right.applyEuler(new THREE.Euler(0, this.rotation.y, 0));
         
-        // Apply input (note: walkInput.z is now correct with fixed controls)
+        // Apply input
         const movement = new THREE.Vector3();
-        movement.add(forward.clone().multiplyScalar(-walkInput.z));  // Negate to match Three.js coordinate system
+        movement.add(forward.clone().multiplyScalar(walkInput.z));  // walkInput.z is now correctly mapped
         movement.add(right.clone().multiplyScalar(walkInput.x));
         
         if (movement.length() > 0) {
@@ -130,8 +130,8 @@ class Player {
         this.position.copy(this.currentAircraft.position);
         this.rotation.copy(this.currentAircraft.rotation);
         
-        // Check for exit aircraft
-        if (controls.isExitPressed()) {
+        // Check for exit aircraft (E key)
+        if (controls.isInteractPressed()) {
             this.exitAircraft();
         }
         
@@ -235,19 +235,27 @@ class Player {
     
     updateCameraPosition() {
         if (this.isFlying && this.currentAircraft) {
-            // Cockpit view with better positioning
-            let cockpitOffset;
+            // Third-person chase camera positioned behind and above aircraft
+            let chaseOffset;
             if (this.currentAircraft.type === 'helicopter') {
-                cockpitOffset = new THREE.Vector3(-3, 2, 0);  // Helicopter cockpit
+                chaseOffset = new THREE.Vector3(25, 12, 0);  // Behind and above helicopter
             } else if (this.currentAircraft.type === 'cargo') {
-                cockpitOffset = new THREE.Vector3(-15, 4, 0); // Cargo plane cockpit
+                chaseOffset = new THREE.Vector3(60, 20, 0);  // Behind and above cargo plane
             } else {
-                cockpitOffset = new THREE.Vector3(-8, 2, 0);  // Fighter cockpit
+                chaseOffset = new THREE.Vector3(35, 15, 0);  // Behind and above fighter
             }
             
-            cockpitOffset.applyEuler(this.currentAircraft.rotation);
-            this.camera.position.copy(this.currentAircraft.position).add(cockpitOffset);
-            this.camera.rotation.copy(this.currentAircraft.rotation);
+            // Apply aircraft rotation to the offset so camera follows aircraft orientation
+            chaseOffset.applyEuler(this.currentAircraft.rotation);
+            this.camera.position.copy(this.currentAircraft.position).add(chaseOffset);
+            
+            // Look at the aircraft (slightly ahead of it)
+            const lookTarget = this.currentAircraft.position.clone();
+            const forwardOffset = new THREE.Vector3(-10, 0, 0); // Look slightly ahead
+            forwardOffset.applyEuler(this.currentAircraft.rotation);
+            lookTarget.add(forwardOffset);
+            
+            this.camera.lookAt(lookTarget);
         } else {
             // First person view
             const cameraPosition = this.position.clone().add(this.cameraOffset);
