@@ -109,16 +109,18 @@ class Controls {
         };
         
         // Pitch (elevator) - Controls nose up/down
-        // W pulls stick back (nose up, negative pitch)
-        // S pushes stick forward (nose down, positive pitch)
+        // W pulls stick back (nose up, negative pitch for correct direction)
+        // S pushes stick forward (nose down, positive pitch for correct direction)
         if (this.isKeyPressed('KeyW') || this.isKeyPressed('ArrowUp')) input.pitch = -1;
         if (this.isKeyPressed('KeyS') || this.isKeyPressed('ArrowDown')) input.pitch = 1;
         
         // Yaw (rudder) - Controls nose left/right
+        // A = yaw left (negative), D = yaw right (positive) - corrected direction
         if (this.isKeyPressed('KeyA') || this.isKeyPressed('ArrowLeft')) input.yaw = -1;
         if (this.isKeyPressed('KeyD') || this.isKeyPressed('ArrowRight')) input.yaw = 1;
         
         // Roll (ailerons) - Controls bank left/right
+        // Q = roll left (negative), E = roll right (positive)
         if (this.isKeyPressed('KeyQ')) input.roll = -1;  // Roll left
         if (this.isKeyPressed('KeyE')) input.roll = 1;   // Roll right
         

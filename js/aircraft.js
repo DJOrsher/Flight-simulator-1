@@ -380,21 +380,68 @@ class Aircraft {
     }
     
     updateAirplanePhysics(deltaTime, flightInput, thrust) {
-        // Calculate all forces using the helper method
-        const forces = this.calculateForces(deltaTime, flightInput, thrust);
+        // Use consistent coordinate system: aircraft nose points in negative Z direction when rotation.y = 0
+        // This aligns with Three.js camera forward direction (-Z)
+        const forward = new THREE.Vector3(0, 0, -1);
+        forward.applyEuler(this.rotation);
+        
+        const right = new THREE.Vector3(1, 0, 0);
+        right.applyEuler(this.rotation);
+        
+        const up = new THREE.Vector3(0, 1, 0);
+        up.applyEuler(this.rotation);
+        
+        // Calculate thrust force with proper scaling
+        const thrustNewtons = thrust * 4.448; // lbs to Newtons conversion
+        const mass = this.weight * 0.453592; // lbs to kg conversion
+        
+        // Thrust force in forward direction - significantly increased effectiveness
+        const thrustAcceleration = thrustNewtons / mass;
+        const thrustForce = forward.clone().multiplyScalar(thrustAcceleration * 3.0);
+        
+        // Gravity - standard Earth gravity
+        const gravity = new THREE.Vector3(0, -9.81, 0);
+        
+        // Lift calculation - based on airspeed and angle of attack
+        const airspeed = this.velocity.length();
+        const minFlyingSpeed = 10; // Reduced minimum flying speed
+        let liftForce = new THREE.Vector3(0, 0, 0);
+        
+        if (airspeed > minFlyingSpeed) {
+            // Calculate angle of attack between velocity and forward direction
+            const velocityDirection = this.velocity.clone().normalize();
+            const dot = forward.dot(velocityDirection);
+            const angleOfAttack = Math.acos(Math.max(-1, Math.min(1, dot)));
+            
+            // Lift coefficient based on angle of attack and airspeed
+            const liftCoeff = Math.sin(angleOfAttack * 1.5) * Math.min(airspeed / 25, 3);
+            
+            // Lift force perpendicular to velocity direction, in aircraft up direction
+            const liftMagnitude = liftCoeff * 15 * (this.wingArea / 300); // Reduced lift to prevent excessive climbing
+            liftForce = up.clone().multiplyScalar(liftMagnitude);
+        }
+        
+        // Drag force opposing velocity - air resistance
+        const airspeedSquared = airspeed * airspeed;
+        const dragCoeff = 0.008; // Reduced drag coefficient
+        const dragForce = this.velocity.clone().multiplyScalar(-dragCoeff * airspeedSquared * 0.01);
         
         // Combine all forces
-        this.forces = forces.thrust.clone()
-            .add(forces.gravity)
-            .add(forces.lift)
-            .add(forces.drag);
+        this.forces = new THREE.Vector3()
+            .add(thrustForce)
+            .add(gravity)
+            .add(liftForce)
+            .add(dragForce);
         
-        // Debug logging occasionally
+        // Debug logging for physics tuning
         if (Math.random() < 0.01) {
-            console.log('Aircraft Physics Debug:', {
+            console.log('Airplane Physics Debug:', {
                 thrust: thrust,
-                thrustForce: forces.thrust.length(),
-                airspeed: this.velocity.length(),
+                thrustForce: thrustForce.length(),
+                airspeed: airspeed,
+                liftForce: liftForce.y,
+                gravityForce: gravity.y,
+                netVerticalForce: thrustForce.y + gravity.y + liftForce.y,
                 velocity: this.velocity.length(),
                 position: { x: this.position.x, y: this.position.y, z: this.position.z },
                 throttle: this.throttle,
@@ -410,38 +457,56 @@ class Aircraft {
     }
     
     updateHelicopterPhysics(deltaTime, flightInput, thrust) {
+        // Use consistent coordinate system: nose points in negative Z direction when rotation.y = 0
+        const forward = new THREE.Vector3(0, 0, -1);
+        forward.applyEuler(this.rotation);
+        
+        const right = new THREE.Vector3(1, 0, 0);
+        right.applyEuler(this.rotation);
+        
+        const up = new THREE.Vector3(0, 1, 0);
+        up.applyEuler(this.rotation);
+        
         // Helicopter physics with specialized hover capability
         const thrustNewtons = thrust * 4.448; // lbs to Newtons conversion
         const mass = this.weight * 0.453592; // lbs to kg conversion
         
-        // Vertical thrust (rotor lift) - main rotor provides vertical lift
-        const hoverThrust = new THREE.Vector3(0, thrustNewtons / mass * 1.2, 0);
+        // Vertical thrust (main rotor lift) - primary force for helicopters
+        const rotorLiftAcceleration = thrustNewtons / mass;
+        const verticalThrust = new THREE.Vector3(0, 1, 0).multiplyScalar(rotorLiftAcceleration * 1.1);
         
-        // Gravity
+        // Gravity - standard Earth gravity
         const gravity = new THREE.Vector3(0, -9.81, 0);
         
-        // Movement based on tilt (helicopter cyclic control simulation)
-        const tiltForward = new THREE.Vector3(0, 0, -1);
-        const tiltRight = new THREE.Vector3(1, 0, 0);
-        tiltForward.applyEuler(new THREE.Euler(0, this.rotation.y, 0));
-        tiltRight.applyEuler(new THREE.Euler(0, this.rotation.y, 0));
+        // Cyclic control simulation - tilting the rotor disc for movement
+        const cyclicForce = new THREE.Vector3();
         
-        const movement = new THREE.Vector3();
-        movement.add(tiltForward.clone().multiplyScalar(-flightInput.pitch * 15));
-        movement.add(tiltRight.clone().multiplyScalar(flightInput.yaw * 15));
+        // Forward/backward movement (pitch input controls forward/backward tilt)
+        cyclicForce.add(forward.clone().multiplyScalar(-flightInput.pitch * 20));
         
-        // Drag (air resistance) - helicopters have more complex drag
+        // Left/right movement (yaw input controls left/right tilt for helicopters)
+        cyclicForce.add(right.clone().multiplyScalar(flightInput.yaw * 20));
+        
+        // Drag (air resistance) - helicopters have significant drag
         const airspeed = this.velocity.length();
-        const drag = this.velocity.clone().multiplyScalar(-0.3 * airspeed * 0.01);
+        const dragCoeff = 0.4; // Higher drag for helicopters
+        const dragForce = this.velocity.clone().multiplyScalar(-dragCoeff * airspeed * 0.02);
         
         // Combine all forces
-        this.forces = hoverThrust.clone().add(gravity).add(movement).add(drag);
+        this.forces = new THREE.Vector3()
+            .add(verticalThrust)
+            .add(gravity)
+            .add(cyclicForce)
+            .add(dragForce);
         
         // Debug logging for helicopters
         if (Math.random() < 0.01) {
             console.log('Helicopter Physics Debug:', {
                 thrust: thrust,
-                hoverThrust: hoverThrust.y,
+                verticalThrust: verticalThrust.y,
+                gravity: gravity.y,
+                netVerticalForce: verticalThrust.y + gravity.y,
+                cyclicForce: cyclicForce.length(),
                 velocity: this.velocity.length(),
                 position: { x: this.position.x, y: this.position.y, z: this.position.z },
                 throttle: this.throttle
@@ -460,15 +525,20 @@ class Aircraft {
         this.throttle = 0.6; // Start with higher initial power
         
         if (this.type !== 'helicopter') {
-            // Give initial forward velocity for airplanes (in correct direction)
-            const forward = new THREE.Vector3(-40, 3, 0); // Increased initial velocity with slight climb
+            // Give initial forward velocity for airplanes using consistent coordinate system
+            // Forward is negative Z direction when rotation.y = 0
+            const forward = new THREE.Vector3(0, 0, -40); // Forward velocity in -Z direction
+            const upward = new THREE.Vector3(0, 3, 0); // Slight upward velocity for takeoff
+            
+            // Apply current aircraft rotation to the initial velocity
             forward.applyEuler(this.rotation);
-            this.velocity.copy(forward);
+            
+            this.velocity.copy(forward).add(upward);
         } else {
-            // Helicopters start with slight upward thrust
-            this.velocity.set(0, 8, 0); // Increased initial vertical velocity
+            // Helicopters start with upward thrust for immediate hover capability
+            this.velocity.set(0, 8, 0); // Vertical velocity for lift-off
         }
-        console.log(`${this.type} aircraft started flying with throttle: ${this.throttle}`);
+        console.log(`${this.type} aircraft started flying with throttle: ${this.throttle}, initial velocity:`, this.velocity);
     }
     
     stopFlying() {
@@ -505,32 +575,32 @@ class Aircraft {
         const thrustNewtons = thrust * 4.448; // lbs to Newtons conversion
         const mass = this.weight * 0.453592; // lbs to kg conversion
         
-        // Calculate thrust direction
-        const forward = new THREE.Vector3(-1, 0, 0); // Forward is negative X
+        // Calculate thrust direction using consistent coordinate system (negative Z forward)
+        const forward = new THREE.Vector3(0, 0, -1);
         forward.applyEuler(this.rotation);
-        forces.thrust = forward.clone().multiplyScalar(thrustNewtons / mass * 2.0);
+        forces.thrust = forward.clone().multiplyScalar(thrustNewtons / mass * 3.0);
         
         // Calculate lift for airplanes
         if (this.type !== 'helicopter') {
             const airspeed = this.velocity.length();
-            const minFlyingSpeed = 15;
+            const minFlyingSpeed = 10;
             
             if (airspeed > minFlyingSpeed) {
                 const velocityDirection = this.velocity.clone().normalize();
                 const dot = forward.dot(velocityDirection);
                 const angleOfAttack = Math.acos(Math.max(-1, Math.min(1, dot)));
-                const liftCoeff = Math.sin(angleOfAttack * 2) * Math.min(airspeed / 30, 4);
+                const liftCoeff = Math.sin(angleOfAttack * 1.5) * Math.min(airspeed / 25, 3);
                 
                 const up = new THREE.Vector3(0, 1, 0);
                 up.applyEuler(this.rotation);
-                forces.lift = up.multiplyScalar(liftCoeff * 40 * (this.wingArea / 500));
+                forces.lift = up.multiplyScalar(liftCoeff * 15 * (this.wingArea / 300));
             }
         }
         
         // Calculate drag
         const airspeed = this.velocity.length();
-        const dragCoeff = this.type === 'helicopter' ? 0.3 : 0.015;
-        const dragMultiplier = this.type === 'helicopter' ? 0.01 : 0.008;
+        const dragCoeff = this.type === 'helicopter' ? 0.4 : 0.008;
+        const dragMultiplier = this.type === 'helicopter' ? 0.02 : 0.01;
         forces.drag = this.velocity.clone().multiplyScalar(-dragCoeff * airspeed * dragMultiplier);
         
         return forces;
@@ -546,8 +616,14 @@ class Aircraft {
         const pitchRate = this.type === 'helicopter' ? 0.6 : 0.8;
         const yawRate = this.type === 'helicopter' ? 0.8 : 0.6;
         
+        // Apply rotations with correct mapping
+        // Roll: positive input = roll right (positive Z rotation)
         this.rotation.z += flightInput.roll * deltaTime * rollRate;
+        
+        // Pitch: negative input = nose up (negative X rotation)
         this.rotation.x += flightInput.pitch * deltaTime * pitchRate;
+        
+        // Yaw: positive input = nose right (positive Y rotation)
         this.rotation.y += flightInput.yaw * deltaTime * yawRate;
         
         // Apply rotation limits based on aircraft type
