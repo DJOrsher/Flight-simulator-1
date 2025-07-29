@@ -67,7 +67,7 @@ class Player {
         
         // Apply input
         const movement = new THREE.Vector3();
-        movement.add(forward.clone().multiplyScalar(walkInput.z));  // walkInput.z is now correctly mapped
+        movement.add(forward.clone().multiplyScalar(-walkInput.z));  // Invert Z to match expected direction
         movement.add(right.clone().multiplyScalar(walkInput.x));
         
         if (movement.length() > 0) {
@@ -130,8 +130,8 @@ class Player {
         this.position.copy(this.currentAircraft.position);
         this.rotation.copy(this.currentAircraft.rotation);
         
-        // Check for exit aircraft (E key)
-        if (controls.isInteractPressed()) {
+        // Check for exit aircraft (Escape key only to avoid conflicts)
+        if (controls.isExitPressed()) {
             this.exitAircraft();
         }
         
