@@ -120,11 +120,16 @@ class Controls {
         
         // Roll (ailerons) - Controls bank left/right
         if (this.isKeyPressed('KeyQ')) input.roll = -1;  // Roll left
-        if (this.isKeyPressed('KeyZ')) input.roll = 1;   // Roll right
+        if (this.isKeyPressed('KeyE')) input.roll = 1;   // Roll right
         
         // Throttle control
         if (this.isKeyPressed('Space')) input.throttle = 1;      // Increase throttle
         if (this.isKeyPressed('ShiftLeft')) input.throttle = -1; // Decrease throttle
+        
+        // Debug logging for flight input (occasionally)
+        if (Math.random() < 0.005 && (input.pitch !== 0 || input.yaw !== 0 || input.roll !== 0 || input.throttle !== 0)) {
+            console.log('Flight Input Debug:', input);
+        }
         
         return input;
     }
